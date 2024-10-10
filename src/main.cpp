@@ -11,8 +11,8 @@
 
 using namespace std;
 
-string inputFilename = "example6.csv"; // Input CSV file with orders
-string outputFilename = "execution6.csv"; // Output CSV file with execution report
+string inputFilename = "example7.csv"; // Input CSV file with orders
+string outputFilename = "execution7.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -51,11 +51,25 @@ public:
         return side == "2";
     }
 
-    bool isValid() const {
-        return !clientOrder.empty() && !instrument.empty() && !side.empty() &&
-               quantity > 0 && price > 0 && quantity % 10 == 0 &&
-               quantity >= 10 && quantity <= 1000 &&
-               (side == "1" || side == "2");
+    pair<bool, string> isValid() const {
+
+        bool nonempty_fields = !clientOrder.empty() && !instrument.empty() && !side.empty();
+        bool valid_quantity = quantity % 10 == 0 && quantity >= 10 && quantity <= 1000;
+        bool valid_price = price > 0;
+        bool valid_side = side == "1" || side == "2";
+
+        bool is_valid = nonempty_fields && valid_quantity && valid_price && valid_side;
+
+        // Reason string generation for invalid string
+        string reason = "";
+        if (!nonempty_fields) reason += "Empty fields, ";
+        if (!valid_quantity) reason += "Invalid quantity, ";
+        if (!valid_price) reason += "Invalid price, ";
+        if (!valid_side) reason += "Invalid side, ";
+
+        if (!reason.empty()) reason = reason.substr(0, reason.size() - 2);
+
+        return {is_valid, reason};
     }
 
     // Overload the == operator to compare two orders
@@ -124,7 +138,7 @@ public:
         return orders;
     }
 
-    void writeOrderToCSV(const string& filename, const Order& order) {
+    void writeOrderToCSV(const string& filename, const Order& order, const string& reason = "") {
         ofstream file(filename, ios_base::app);
         if (!file.is_open()) {
             cerr << "Error opening file: " << filename << endl;
@@ -132,7 +146,14 @@ public:
         }
         file << order.ord << "," << order.clientOrder << "," << order.instrument << ","
              << order.side << "," << order.execStatus << "," << order.quantity << ","
-             << order.price << endl;
+             << order.price;
+
+        // Add a reason if provided in rejected orders
+        if (!reason.empty()) {
+            file << "," << reason;
+        }
+
+        file << endl;
         file.close();
     }
 
@@ -144,7 +165,7 @@ public:
         }
         file << "Order ID" << "," << "Cl. Ord. ID" << "," << "Instrument" << ","
              << "Side" << "," << "Exec Status" << "," << "Quantity" << ","
-             << "Price" << endl;
+             << "Price" << "," << "Reason" << endl;
         file.close();
     }
 
@@ -255,7 +276,6 @@ public:
             // Check if there are any matching buy orders by iterating through the buy orders
             auto it = buyOrders.begin();
             while (it != buyOrders.end()){
-
                 Order& buy_order = *it;
             
 
@@ -317,13 +337,11 @@ public:
             else if (input_order.isSellOrder()){
                 sellOrders.push_back(input_order);
             }
-            sortOrderbook();     
+            sortOrderbook();
         }
         
         printOrderbook();
 }
-    
-
     // Print orderbook
     void printOrderbook (){
         // Print BUY side
@@ -359,20 +377,18 @@ public:
         // Write the Execution report headings to CSV
         csvHandler.writeHeadingToCSV(outputFilename);
 
-        // Print orders
-        cout << "Printing the orders" << endl;
-        for (const Order& order : orders) {
-            order.printOrder();
-        }
+
 
         // Check for invalid ordes
         for (Order& order : orders) {
             // Check for invalid orders
-            if (order.isValid()) {
+            auto [is_valid, reason] = order.isValid();
+            if (is_valid) {
                 orderBook.processOrder(order);
-            } else {
+            } 
+            else {
                 order.execStatus = "Reject";
-                csvHandler.writeOrderToCSV(outputFilename, order);
+                csvHandler.writeOrderToCSV(outputFilename, order, reason);
             }
         }
         
