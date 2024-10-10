@@ -11,8 +11,8 @@
 
 using namespace std;
 
-string inputFilename = "example4.csv"; // Input CSV file with orders
-string outputFilename = "execution4.csv"; // Output CSV file with execution report
+string inputFilename = "example6.csv"; // Input CSV file with orders
+string outputFilename = "execution6.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -64,7 +64,6 @@ public:
            clientOrder == other.clientOrder &&
            instrument == other.instrument && 
            side == other.side &&
-           execStatus == other.execStatus &&
            quantity == other.quantity &&
            price == other.price;
     }
@@ -178,64 +177,152 @@ public:
     OrderBook(CSVHandler& handler) : csvHandler(handler) {}
 
     // Process each order
-    void processOrder(Order& order) {
+    void processOrder(Order& input_order) {
 
-        cout << "Now considering: "<< order.ord << endl;
+        cout << "Now considering: "<< input_order.ord << endl;
+        bool isMatching = false;
+        Order processed_order = input_order;
 
         // Divide into buy or sell orders
         // If the order is BUY
-        if (order.isBuyOrder()) {
+        if (input_order.isBuyOrder()) {
             cout << "This is a buy order" << endl;
 
             // Check if there are any matching buy orders
-            for (Order& sell_order: sellOrders){
-                if (order.price == sell_order.price && order.quantity >= sell_order.quantity){
+            auto it = sellOrders.begin();
+            while (it != sellOrders.end()) {
+                
+                //current sell order
+                Order& sell_order = *it;
+            
+                if (input_order.price >= sell_order.price && input_order.quantity >= sell_order.quantity){
+
+                    //Matching orders found
                     cout << "Matching orders found" << endl;
+                    isMatching = true;
+
+                    //creating a new order object for the output the current order
+                    //Order processed_order = input_order;
 
                     //Checking whether if the order is filling or partial-filling
                     //Fill
-                    if (order.quantity == sell_order.quantity){
-                        order.execStatus = "Fill";
+                    if (input_order.quantity == sell_order.quantity){
+                        processed_order.execStatus = "Fill";
                         sell_order.execStatus = "Fill";
+                        processed_order.price = sell_order.price;
+                    }
+                    
+                    //Pfill
+                    else if (input_order.quantity > sell_order.quantity){
+                        processed_order.execStatus = "Pfill";
+                        sell_order.execStatus = "Fill";
+                        processed_order.quantity = sell_order.quantity;
+                        input_order.quantity = input_order.quantity - sell_order.quantity;
+                        processed_order.price = sell_order.price;
                     }
 
-                    else if (order.quantity > sell_order.quantity){
-                        order.execStatus = "Pfill";
-                        sell_order.execStatus = "Fill";
-                        order.quantity = order.quantity - sell_order.quantity;
-                    }
-
-                    csvHandler.writeOrderToCSV(outputFilename, order);
+                    csvHandler.writeOrderToCSV(outputFilename, processed_order);
                     csvHandler.writeOrderToCSV(outputFilename, sell_order);
-                    sellOrders.erase(remove(sellOrders.begin(), sellOrders.end(), sell_order), sellOrders.end());
+
+                    //deleting the sell order from the orderbook
+                    it = sellOrders.erase(it);
+
                     sortOrderbook();
-                    return;
+                }
+                else{
+                    ++it;
                 }
             }
             
-            cout << "No matching orders" << endl;
+
+            if (!isMatching){
+                // There are no matching orders
+                cout << "No matching orders" << endl;
                     
-            // Otherwise push the order to the orderbook
-            buyOrders.push_back(order);
-            csvHandler.writeOrderToCSV(outputFilename, order);
-            sortOrderbook();
+                // Push the order to the orderbook
+                buyOrders.push_back(input_order);
+                csvHandler.writeOrderToCSV(outputFilename, input_order);
+                sortOrderbook();
+            }
                 
         }
     
 
-        // If the order is SELL
-        else if (order.isSellOrder()) {
+       // If the order is SELL
+        else if (input_order.isSellOrder()) {
             cout << "This is a sell order" << endl;
 
-            // Check if there are any matching buy orders
-            cout << "No matching orders" << endl;
+            // Check if there are any matching buy orders by iterating through the buy orders
+            auto it = buyOrders.begin();
+            while (it != buyOrders.end()){
 
-            // Otherwise push the order to the orderbook
-            sellOrders.push_back(order);
-            csvHandler.writeOrderToCSV(outputFilename, order);
-            sortOrderbook();
+                Order& buy_order = *it;
+            
+
+                if (input_order.price <= buy_order.price && input_order.quantity >= buy_order.quantity){
+
+                    //Matching orders found
+                    cout << "Matching orders found" << endl;
+                    isMatching = true;
+
+                    // create a new order for process the order
+                    //Order processed_order = input_order;
+
+                    //Checking whether if the order is filling or partial-filling
+                    if (input_order.quantity > buy_order.quantity){
+                        processed_order.execStatus = "Pfill";
+                        buy_order.execStatus = "Fill";
+                        input_order.quantity = input_order.quantity - buy_order.quantity;
+                        processed_order.quantity = buy_order.quantity;
+                        processed_order.price = buy_order.price; 
+                    }
+
+                    //Fill
+                    else if (input_order.quantity == buy_order.quantity){
+                        processed_order.execStatus = "Fill";
+                        buy_order.execStatus = "Fill";
+                        processed_order.price = buy_order.price;
+                    }
+
+                    csvHandler.writeOrderToCSV(outputFilename, processed_order);
+                    csvHandler.writeOrderToCSV(outputFilename, buy_order);
+                    
+                    //deleting the buy order from the orderbook
+                    it = buyOrders.erase(it);
+                    sortOrderbook();
+                }
+                else{
+                    ++it;
+                }
+            }
+
+            
+            if (!isMatching){
+                // There are no matching orders
+                cout << "No matching orders" << endl;
+
+                // Otherwise push the order to the orderbook
+                sellOrders.push_back(input_order);
+                csvHandler.writeOrderToCSV(outputFilename, input_order);
+                sortOrderbook();
+            }
+
         }
-    }
+
+        // Adding the Pfill input order to the orderbook
+        if (isMatching && processed_order.execStatus == "Pfill"){
+            if (input_order.isBuyOrder()){
+                buyOrders.push_back(input_order);
+            }
+            else if (input_order.isSellOrder()){
+                sellOrders.push_back(input_order);
+            }
+            sortOrderbook();     
+        }
+        
+        printOrderbook();
+}
+    
 
     // Print orderbook
     void printOrderbook (){
@@ -288,7 +375,11 @@ public:
                 csvHandler.writeOrderToCSV(outputFilename, order);
             }
         }
-
+        
+        // Print the final orderbook
+        cout << "---------------------" << endl;
+        cout << "Printing the final orderbook" << endl;
+        cout << "---------------------" << endl;
         orderBook.printOrderbook();
     }
 };
