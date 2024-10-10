@@ -11,8 +11,8 @@
 
 using namespace std;
 
-string inputFilename = "example2.csv"; // Input CSV file with orders
-string outputFilename = "execution2.csv"; // Output CSV file with execution report
+string inputFilename = "example4.csv"; // Input CSV file with orders
+string outputFilename = "execution4.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -56,6 +56,17 @@ public:
                quantity > 0 && price > 0 && quantity % 10 == 0 &&
                quantity >= 10 && quantity <= 1000 &&
                (side == "1" || side == "2");
+    }
+
+    // Overload the == operator to compare two orders
+    bool operator==(const Order& other) const {
+    return ord == other.ord && 
+           clientOrder == other.clientOrder &&
+           instrument == other.instrument && 
+           side == other.side &&
+           execStatus == other.execStatus &&
+           quantity == other.quantity &&
+           price == other.price;
     }
 
     void printOrder() const {
@@ -177,15 +188,43 @@ public:
             cout << "This is a buy order" << endl;
 
             // Check if there are any matching buy orders
-            cout << "No matching orders" << endl;
+            for (Order& sell_order: sellOrders){
+                if (order.price == sell_order.price && order.quantity >= sell_order.quantity){
+                    cout << "Matching orders found" << endl;
 
+                    //Checking whether if the order is filling or partial-filling
+                    //Fill
+                    if (order.quantity == sell_order.quantity){
+                        order.execStatus = "Fill";
+                        sell_order.execStatus = "Fill";
+                    }
+
+                    else if (order.quantity > sell_order.quantity){
+                        order.execStatus = "Pfill";
+                        sell_order.execStatus = "Fill";
+                        order.quantity = order.quantity - sell_order.quantity;
+                    }
+
+                    csvHandler.writeOrderToCSV(outputFilename, order);
+                    csvHandler.writeOrderToCSV(outputFilename, sell_order);
+                    sellOrders.erase(remove(sellOrders.begin(), sellOrders.end(), sell_order), sellOrders.end());
+                    sortOrderbook();
+                    return;
+                }
+            }
+            
+            cout << "No matching orders" << endl;
+                    
             // Otherwise push the order to the orderbook
             buyOrders.push_back(order);
             csvHandler.writeOrderToCSV(outputFilename, order);
             sortOrderbook();
+                
+        }
+    
 
         // If the order is SELL
-        } else if (order.isSellOrder()) {
+        else if (order.isSellOrder()) {
             cout << "This is a sell order" << endl;
 
             // Check if there are any matching buy orders
