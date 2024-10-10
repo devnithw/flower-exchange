@@ -39,7 +39,7 @@ public:
     int price;
 
     Order(const string& ord, const string& clientOrder, const string& instrument, const string& side,
-          const string& execStatus, int quantity, int price)
+        const string& execStatus, int quantity, int price)
         : ord(ord), clientOrder(clientOrder), instrument(instrument), side(side), 
           execStatus(execStatus), quantity(quantity), price(price) {}
 
@@ -167,7 +167,7 @@ public:
     OrderBook(CSVHandler& handler) : csvHandler(handler) {}
 
     // Process each order
-    void processOrder(const Order& order) {
+    void processOrder(Order& order) {
 
         cout << "Now considering: "<< order.ord << endl;
 
@@ -176,12 +176,13 @@ public:
         if (order.isBuyOrder()) {
             cout << "This is a buy order" << endl;
 
-            // Check if there are any matching sell orders
+            // Check if there are any matching buy orders
             cout << "No matching orders" << endl;
 
             // Otherwise push the order to the orderbook
             buyOrders.push_back(order);
             csvHandler.writeOrderToCSV(outputFilename, order);
+            sortOrderbook();
 
         // If the order is SELL
         } else if (order.isSellOrder()) {
@@ -193,6 +194,7 @@ public:
             // Otherwise push the order to the orderbook
             sellOrders.push_back(order);
             csvHandler.writeOrderToCSV(outputFilename, order);
+            sortOrderbook();
         }
     }
 
@@ -237,6 +239,7 @@ public:
             order.printOrder();
         }
 
+        // Check for invalid ordes
         for (Order& order : orders) {
             // Check for invalid orders
             if (order.isValid()) {
