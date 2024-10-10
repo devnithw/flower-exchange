@@ -10,6 +10,9 @@
 
 using namespace std;
 
+string inputFilename = "example2.csv"; // Input CSV file with orders
+string outputFilename = "execution2.csv"; // Output CSV file with execution report
+
 // Class to represent a single order
 class Order {
 public:
@@ -89,6 +92,18 @@ public:
         file.close();
     }
 
+    void writeHeadingToCSV(const string& filename) {
+        ofstream file(filename, ios_base::app);
+        if (!file.is_open()) {
+            cerr << "Error opening file: " << filename << endl;
+            return;
+        }
+        file << "Order ID" << "," << "Cl. Ord. ID" << "," << "Instrument" << ","
+             << "Side" << "," << "Exec Status" << "," << "Quantity" << ","
+             << "Price" << endl;
+        file.close();
+    }
+
     void writeExecutionTimeToCSV(const string& filename, long long executionTime) {
         ofstream file(filename, ios_base::app);
         if (!file.is_open()) {
@@ -107,47 +122,44 @@ private:
     vector<Order> sellOrders;
     CSVHandler csvHandler;
 
-    void matchOrders() {
+    void sortOrderbook() {
         // Sort the buy orders in descensing order
+        cout << "Sorting the orderbook" << endl;
         sort(buyOrders.begin(), buyOrders.end(), [](const Order& a, const Order& b) { return a.price > b.price; });
         sort(sellOrders.begin(), sellOrders.end(), [](const Order& a, const Order& b) { return a.price < b.price; });
-
-        while (!buyOrders.empty() && !sellOrders.empty()) {
-            Order& buyOrder = buyOrders.front();
-            Order& sellOrder = sellOrders.front();
-
-            if (buyOrder.price >= sellOrder.price) {
-                int tradeQuantity = min(buyOrder.quantity, sellOrder.quantity);
-                buyOrder.quantity -= tradeQuantity;
-                sellOrder.quantity -= tradeQuantity;
-
-                if (buyOrder.quantity == 0) buyOrders.erase(buyOrders.begin());
-                if (sellOrder.quantity == 0) sellOrders.erase(sellOrders.begin());
-
-                buyOrder.execStatus = (buyOrder.quantity == 0) ? "Fill" : "PFill";
-                sellOrder.execStatus = (sellOrder.quantity == 0) ? "Fill" : "PFill";
-
-                csvHandler.writeOrderToCSV("execution_rep.csv", buyOrder);
-                csvHandler.writeOrderToCSV("execution_rep.csv", sellOrder);
-            } else {
-                break;
-            }
-        }
     }
 
 public:
     OrderBook(CSVHandler& handler) : csvHandler(handler) {}
 
-    // Divide the orders into buy and sell orders
+    // Process each order
     void processOrder(const Order& order) {
-        if (order.isBuyOrder()) {
-            buyOrders.push_back(order);
-        } else if (order.isSellOrder()) {
-            sellOrders.push_back(order);
-        }
 
-        // Resolve orderbook
-        matchOrders();
+        cout << "Now considering: "<< order.ord << endl;
+
+        // Divide into buy or sell orders
+        // If the order is BUY
+        if (order.isBuyOrder()) {
+            cout << "This is a buy order" << endl;
+
+            // Check if there are any matching sell orders
+            cout << "No matching orders" << endl;
+
+            // Otherwise push the order to the orderbook
+            buyOrders.push_back(order);
+            csvHandler.writeOrderToCSV(outputFilename, order);
+
+        // If the order is SELL
+        } else if (order.isSellOrder()) {
+            cout << "This is a sell order" << endl;
+
+            // Check if there are any matching buy orders
+            cout << "No matching orders" << endl;
+
+            // Otherwise push the order to the orderbook
+            sellOrders.push_back(order);
+            csvHandler.writeOrderToCSV(outputFilename, order);
+        }
     }
 };
 
@@ -156,17 +168,17 @@ class OrderManager {
 private:
     CSVHandler csvHandler;
     OrderBook orderBook;
-    string inputFilename;
-    string outputFilename;
 
 public:
     // Constructor for the order manager
     OrderManager(const string& inputFile, const string& outputFile)
-        : csvHandler(), orderBook(csvHandler), inputFilename(inputFile), outputFilename(outputFile) {}
+        : csvHandler(), orderBook(csvHandler) {}
 
     void processOrders() {
         // Read the orders from the input CSV file
         vector<Order> orders = csvHandler.readCSV(inputFilename);
+        // Write the Execution report headings to CSV
+        csvHandler.writeHeadingToCSV(outputFilename);
 
         // Print orders
         cout << "Printing the orders" << endl;
@@ -194,9 +206,6 @@ public:
 };
 
 int main() {
-    string inputFilename = "example1.csv"; // Input CSV file with orders
-    string outputFilename = "execution1.csv"; // Output CSV file for order execution
-
     // Instantiate order manager
     OrderManager orderManager(inputFilename, outputFilename);
 
