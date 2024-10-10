@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <iomanip>
 #include <algorithm>
 #include <chrono>
 #include <typeinfo>
@@ -11,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example7.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution7.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example5.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution5.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -36,10 +37,10 @@ public:
     string side;
     string execStatus;
     int quantity;
-    int price;
+    double price;
 
     Order(const string& ord, const string& clientOrder, const string& instrument, const string& side,
-        const string& execStatus, int quantity, int price)
+        const string& execStatus, int quantity, double price)
         : ord(ord), clientOrder(clientOrder), instrument(instrument), side(side), 
           execStatus(execStatus), quantity(quantity), price(price) {}
 
@@ -57,15 +58,17 @@ public:
         bool valid_quantity = quantity % 10 == 0 && quantity >= 10 && quantity <= 1000;
         bool valid_price = price > 0;
         bool valid_side = side == "1" || side == "2";
+        bool valid_instrument = instrument == "Rose" || instrument == "Lavender" || instrument == "Lotus" || instrument == "Tulip" || instrument == "Orchid";  
 
-        bool is_valid = nonempty_fields && valid_quantity && valid_price && valid_side;
+        bool is_valid = nonempty_fields && valid_quantity && valid_price && valid_side && valid_instrument;
 
         // Reason string generation for invalid string
         string reason = "";
-        if (!nonempty_fields) reason += "Empty fields, ";
-        if (!valid_quantity) reason += "Invalid quantity, ";
-        if (!valid_price) reason += "Invalid price, ";
-        if (!valid_side) reason += "Invalid side, ";
+        if (!nonempty_fields) reason += "Empty fields & ";
+        if (!valid_instrument) reason += "Invalid instrument & ";
+        if (!valid_quantity) reason += "Invalid quantity & ";
+        if (!valid_price) reason += "Invalid price & ";
+        if (!valid_side) reason += "Invalid side & ";
 
         if (!reason.empty()) reason = reason.substr(0, reason.size() - 2);
 
@@ -120,12 +123,14 @@ public:
             getline(ss, quantityStr, ',');
             getline(ss, priceStr, ',');
 
-            // Trim whitespace from the side field
+            // Trim whitespace from the side and instrument fields
             trim(side);
+            trim(instrument);
+
             
             // Convert quantity and price to integers
             int quantity = stoi(quantityStr);
-            int price = stoi(priceStr);
+            double price = stod(priceStr);
 
             // Generate order ID
             string ord = "ord" + to_string(orderCounter++);
@@ -146,7 +151,7 @@ public:
         }
         file << order.ord << "," << order.clientOrder << "," << order.instrument << ","
              << order.side << "," << order.execStatus << "," << order.quantity << ","
-             << order.price;
+             << fixed << setprecision(2) << order.price;
 
         // Add a reason if provided in rejected orders
         if (!reason.empty()) {
@@ -225,14 +230,11 @@ public:
                 //current sell order
                 Order& sell_order = *it;
             
-                if (input_order.price >= sell_order.price && input_order.quantity >= sell_order.quantity){
+                if (input_order.instrument == sell_order.instrument && input_order.price >= sell_order.price && input_order.quantity >= sell_order.quantity){
 
                     //Matching orders found
                     cout << "Matching orders found" << endl;
                     isMatching = true;
-
-                    //creating a new order object for the output the current order
-                    //Order processed_order = input_order;
 
                     //Checking whether if the order is filling or partial-filling
                     //Fill
@@ -288,14 +290,11 @@ public:
                 Order& buy_order = *it;
             
 
-                if (input_order.price <= buy_order.price && input_order.quantity >= buy_order.quantity){
+                if (input_order.instrument == buy_order.instrument  && input_order.price <= buy_order.price && input_order.quantity >= buy_order.quantity){
 
                     //Matching orders found
                     cout << "Matching orders found" << endl;
                     isMatching = true;
-
-                    // create a new order for process the order
-                    //Order processed_order = input_order;
 
                     //Checking whether if the order is filling or partial-filling
                     if (input_order.quantity > buy_order.quantity){
