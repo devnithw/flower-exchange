@@ -11,8 +11,8 @@
 
 using namespace std;
 
-string inputFilename = "example7.csv"; // Input CSV file with orders
-string outputFilename = "execution7.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example7.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution7.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -188,10 +188,19 @@ private:
     CSVHandler csvHandler;
 
     void sortOrderbook() {
-        // Sort the buy orders in descensing order
         cout << "Sorting the orderbook" << endl;
-        sort(buyOrders.begin(), buyOrders.end(), [](const Order& a, const Order& b) { return a.price > b.price; });
-        sort(sellOrders.begin(), sellOrders.end(), [](const Order& a, const Order& b) { return a.price < b.price; });
+
+        // Sort the buy orders in descensing order of price, and in case of a tie, by 'ord' (FIFO)
+        sort(buyOrders.begin(), buyOrders.end(), [](const Order& a, const Order& b) {
+            if (a.price != b.price) return a.price > b.price;  // Higher price comes first for buy orders
+            else return a.ord < b.ord; // For the same price, earlier 'ord' comes first
+        });
+
+        // Sort the sell orders in ascending order of price, and in case of a tie, by 'ord' (first come first serve)
+        sort(sellOrders.begin(), sellOrders.end(), [](const Order& a, const Order& b) {
+            if (a.price != b.price) return a.price < b.price;  // Lower price comes first for sell orders
+            else return a.ord < b.ord; // For the same price, earlier 'ord' comes first
+        });
     }
 
 public:
