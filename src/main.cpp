@@ -7,11 +7,25 @@
 #include <algorithm>
 #include <chrono>
 #include <typeinfo>
+#include <cctype>
 
 using namespace std;
 
 string inputFilename = "example2.csv"; // Input CSV file with orders
 string outputFilename = "execution2.csv"; // Output CSV file with execution report
+
+// Utility function to trim the whitespace from start and end of a string
+void trim(string& s) {
+    size_t start = s.find_first_not_of(" \t\r\n");
+    size_t end = s.find_last_not_of(" \t\r\n");
+
+    if (start != string::npos && end != string::npos) {
+        s = s.substr(start, end - start + 1);
+    }
+    else {
+        s.clear();
+    }
+}
 
 // Class to represent a single order
 class Order {
@@ -43,6 +57,17 @@ public:
                quantity >= 10 && quantity <= 1000 &&
                (side == "1" || side == "2");
     }
+
+    void printOrder() const {
+        cout << "Order ID: " << ord
+            << ", Client Order: " << clientOrder
+            << ", Instrument: " << instrument
+            << ", Side: " << side
+            << ", Status: " << execStatus
+            << ", Quantity: " << quantity
+            << ", Price: " << price
+            << std::endl;
+    }
 };
 
 // Class to handle CSV file operations
@@ -52,13 +77,15 @@ public:
         vector<Order> orders;
         ifstream file(filename);
 
+        // Raise error if file not found
         if (!file.is_open()) {
             cerr << "Error opening file: " << filename << endl;
             return orders;
         }
-
         string line;
         int orderCounter = 1;
+
+        // Read all the lines from the CSV file
         while (getline(file, line)) {
             istringstream ss(line);
             string clientOrder, instrument, side, quantityStr, priceStr;
@@ -69,10 +96,17 @@ public:
             getline(ss, quantityStr, ',');
             getline(ss, priceStr, ',');
 
+            // Trim whitespace from the side field
+            trim(side);
+            
+            // Convert quantity and price to integers
             int quantity = stoi(quantityStr);
             int price = stoi(priceStr);
+
+            // Generate order ID
             string ord = "ord" + to_string(orderCounter++);
 
+            // Create order object and push to the orders vector
             orders.emplace_back(ord, clientOrder, instrument, side, "New", quantity, price);
         }
 
@@ -161,6 +195,23 @@ public:
             csvHandler.writeOrderToCSV(outputFilename, order);
         }
     }
+
+    // Print orderbook
+    void printOrderbook (){
+        // Print BUY side
+        cout << "Printing the BUY side" << endl;
+        cout << "---------------------" << endl;
+        for (const Order& order : buyOrders) {
+            order.printOrder();
+        }
+
+        // Print SEll side
+        cout << "Printing the SELL side" << endl;
+        cout << "---------------------" << endl;
+        for (const Order& order : sellOrders) {
+            order.printOrder();
+        }
+    }
 };
 
 // Main class to manage the order processing
@@ -183,14 +234,7 @@ public:
         // Print orders
         cout << "Printing the orders" << endl;
         for (const Order& order : orders) {
-        cout << "Order ID: " << order.ord
-            << ", Client Order: " << order.clientOrder
-            << ", Instrument: " << order.instrument
-            << ", Side: " << order.side
-            << ", Status: " << order.execStatus
-            << ", Quantity: " << order.quantity
-            << ", Price: " << order.price
-            << std::endl;
+            order.printOrder();
         }
 
         for (Order& order : orders) {
@@ -202,6 +246,8 @@ public:
                 csvHandler.writeOrderToCSV(outputFilename, order);
             }
         }
+
+        orderBook.printOrderbook();
     }
 };
 
