@@ -12,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example8.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution8.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example6.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution_test.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -34,43 +34,43 @@ public:
     string ord;
     string clientOrder;
     string instrument;
-    string side;
-    string execStatus;
+    int side;
+    int status;
     int quantity;
     double price;
 
-    Order(const string& ord, const string& clientOrder, const string& instrument, const string& side,
-        const string& execStatus, int quantity, double price)
+    // order constructor
+    Order(const string& ord, const string& clientOrder, const string& instrument, int side,
+        int status, int quantity, double price)
         : ord(ord), clientOrder(clientOrder), instrument(instrument), side(side), 
-          execStatus(execStatus), quantity(quantity), price(price) {}
+          status(status), quantity(quantity), price(price) {}
 
     bool isBuyOrder() const {
-        return side == "1";
+        return side == 1;
     }
 
     bool isSellOrder() const {
-        return side == "2";
+        return side == 2;
     }
 
     pair<bool, string> isValid() const {
 
-        bool nonempty_fields = !clientOrder.empty() && !instrument.empty() && !side.empty();
+        bool nonempty_fields = !clientOrder.empty() && !instrument.empty();
         bool valid_quantity = quantity % 10 == 0 && quantity >= 10 && quantity <= 1000;
         bool valid_price = price > 0;
-        bool valid_side = side == "1" || side == "2";
+        bool valid_side = side == 1 || side == 2;
         bool valid_instrument = instrument == "Rose" || instrument == "Lavender" || instrument == "Lotus" || instrument == "Tulip" || instrument == "Orchid";  
 
+        // validity of the order
         bool is_valid = nonempty_fields && valid_quantity && valid_price && valid_side && valid_instrument;
 
         // Reason string generation for invalid string
         string reason = "";
-        if (!nonempty_fields) reason += "Empty fields & ";
-        if (!valid_instrument) reason += "Invalid instrument & ";
-        if (!valid_quantity) reason += "Invalid quantity & ";
-        if (!valid_price) reason += "Invalid price & ";
-        if (!valid_side) reason += "Invalid side & ";
-
-        if (!reason.empty()) reason = reason.substr(0, reason.size() - 2);
+        if (!nonempty_fields) reason = "Empty fields";
+        else if (!valid_instrument) reason = "Invalid instrument";
+        else if (!valid_quantity) reason = "Invalid quantity";
+        else if (!valid_price) reason = "Invalid price";
+        else if (!valid_side) reason = "Invalid side";
 
         return {is_valid, reason};
     }
@@ -90,7 +90,10 @@ public:
             << ", Client Order: " << clientOrder
             << ", Instrument: " << instrument
             << ", Side: " << side
-            << ", Status: " << execStatus
+            << ", Status: " << (status == 0 ? "New" :
+                                status == 1 ? "Rejected" :
+                                status == 2 ? "Fill" :
+                                status == 3 ? "Pfill" : "Unknown")
             << ", Quantity: " << quantity
             << ", Price: " << price
             << std::endl;
@@ -115,28 +118,28 @@ public:
         // Read all the lines from the CSV file
         while (getline(file, line)) {
             istringstream ss(line);
-            string clientOrder, instrument, side, quantityStr, priceStr;
+            string clientOrder, instrument, sideStr, quantityStr, priceStr;
             
             getline(ss, clientOrder, ',');
             getline(ss, instrument, ',');
-            getline(ss, side, ',');
+            getline(ss, sideStr, ',');
             getline(ss, quantityStr, ',');
             getline(ss, priceStr, ',');
 
             // Trim whitespace from the side and instrument fields
-            trim(side);
+            trim(sideStr);
             trim(instrument);
-
             
             // Convert quantity and price to integers
             int quantity = stoi(quantityStr);
+            int side = stoi(sideStr);
             double price = stod(priceStr);
 
             // Generate order ID
             string ord = "ord" + to_string(orderCounter++);
 
             // Create order object and push to the orders vector
-            orders.emplace_back(ord, clientOrder, instrument, side, "New", quantity, price);
+            orders.emplace_back(ord, clientOrder, instrument, side, 0, quantity, price);
         }
 
         file.close();
@@ -149,11 +152,19 @@ public:
             cerr << "Error opening file: " << filename << endl;
             return;
         }
+
+        // Status string generation
+        string status = (order.status == 0 ? "New" :
+                         order.status == 1 ? "Rejected" :
+                         order.status == 2 ? "Fill" :
+                         order.status == 3 ? "Pfill" : "Unknown");
+
+        // Write the order details to the CSV file
         file << order.ord << "," << order.clientOrder << "," << order.instrument << ","
-             << order.side << "," << order.execStatus << "," << order.quantity << ","
+             << order.side << "," << status << "," << order.quantity << ","
              << fixed << setprecision(2) << order.price;
 
-        // Add a reason if provided in rejected orders
+        // Add a reason if the order is invalid
         if (!reason.empty()) {
             file << "," << reason;
         }
@@ -169,7 +180,7 @@ public:
             return;
         }
         file << "Order ID" << "," << "Cl. Ord. ID" << "," << "Instrument" << ","
-             << "Side" << "," << "Exec Status" << "," << "Quantity" << ","
+             << "Side" << "," << "Status" << "," << "Quantity" << ","
              << "Price" << "," << "Reason" << endl;
         file.close();
     }
@@ -215,8 +226,9 @@ public:
     void processOrder(Order& input_order) {
 
         cout << "Now considering: "<< input_order.ord << endl;
-        bool isMatching = false;
-        Order processed_order = input_order;
+
+        bool isMatching = false; // flag to check if the order is matching
+        Order processed_order = input_order; // generating order object for the processing order
 
         // Divide into buy or sell orders
         // If the order is BUY
@@ -224,7 +236,7 @@ public:
             cout << "This is a buy order" << endl;
 
             // Check if there are any matching buy orders
-            auto it = sellOrders.begin();
+            auto it = sellOrders.begin(); // iterator for the sell orders
             while (it != sellOrders.end()) {
                 
                 //current sell order
@@ -239,27 +251,25 @@ public:
                     //Checking whether if the order is filling or partial-filling
                     //Fill
                     if (input_order.quantity == sell_order.quantity){
-                        processed_order.execStatus = "Fill";
-                        sell_order.execStatus = "Fill";
+                        processed_order.status = 2;
+                        sell_order.status = 2;
                         processed_order.price = sell_order.price;
                     }
                     
                     //Pfill
                     else if (input_order.quantity > sell_order.quantity){
-                        processed_order.execStatus = "Pfill";
-                        sell_order.execStatus = "Fill";
+                        processed_order.status = 3;
+                        sell_order.status = 2;
                         processed_order.quantity = sell_order.quantity;
                         input_order.quantity = input_order.quantity - sell_order.quantity;
                         processed_order.price = sell_order.price;
                     }
 
-                    csvHandler.writeOrderToCSV(outputFilename, processed_order);
-                    csvHandler.writeOrderToCSV(outputFilename, sell_order);
+                    csvHandler.writeOrderToCSV(outputFilename, processed_order); // writing the processed order to the CSV
+                    csvHandler.writeOrderToCSV(outputFilename, sell_order); // writing the sell order to the CSV
 
                     //deleting the sell order from the orderbook
                     it = sellOrders.erase(it);
-
-                    sortOrderbook();
                 }
                 else{
                     ++it;
@@ -274,21 +284,20 @@ public:
                 // Push the order to the orderbook
                 buyOrders.push_back(input_order);
                 csvHandler.writeOrderToCSV(outputFilename, input_order);
-                sortOrderbook();
-            }
-                
+            }       
         }
     
 
        // If the order is SELL
-        else if (input_order.isSellOrder()) {
+        else if (input_order.isSellOrder()) { 
             cout << "This is a sell order" << endl;
 
             // Check if there are any matching buy orders by iterating through the buy orders
             auto it = buyOrders.begin();
             while (it != buyOrders.end()){
+
+                //current buy order
                 Order& buy_order = *it;
-            
 
                 if (input_order.instrument == buy_order.instrument  && input_order.price <= buy_order.price && input_order.quantity >= buy_order.quantity){
 
@@ -297,9 +306,10 @@ public:
                     isMatching = true;
 
                     //Checking whether if the order is filling or partial-filling
+                    //Pfill
                     if (input_order.quantity > buy_order.quantity){
-                        processed_order.execStatus = "Pfill";
-                        buy_order.execStatus = "Fill";
+                        processed_order.status = 3;
+                        buy_order.status = 2;
                         input_order.quantity = input_order.quantity - buy_order.quantity;
                         processed_order.quantity = buy_order.quantity;
                         processed_order.price = buy_order.price; 
@@ -307,17 +317,16 @@ public:
 
                     //Fill
                     else if (input_order.quantity == buy_order.quantity){
-                        processed_order.execStatus = "Fill";
-                        buy_order.execStatus = "Fill";
+                        processed_order.status = 2;
+                        buy_order.status = 2;
                         processed_order.price = buy_order.price;
                     }
 
-                    csvHandler.writeOrderToCSV(outputFilename, processed_order);
-                    csvHandler.writeOrderToCSV(outputFilename, buy_order);
+                    csvHandler.writeOrderToCSV(outputFilename, processed_order); // writing the processed order to the CSV
+                    csvHandler.writeOrderToCSV(outputFilename, buy_order); // writing the buy order to the CSV
                     
                     //deleting the buy order from the orderbook
                     it = buyOrders.erase(it);
-                    sortOrderbook();
                 }
                 else{
                     ++it;
@@ -332,22 +341,21 @@ public:
                 // Otherwise push the order to the orderbook
                 sellOrders.push_back(input_order);
                 csvHandler.writeOrderToCSV(outputFilename, input_order);
-                sortOrderbook();
             }
 
         }
 
         // Adding the Pfill input order to the orderbook
-        if (isMatching && processed_order.execStatus == "Pfill"){
-            if (input_order.isBuyOrder()){
-                buyOrders.push_back(input_order);
-            }
-            else if (input_order.isSellOrder()){
-                sellOrders.push_back(input_order);
-            }
-            sortOrderbook();
+        if (isMatching && processed_order.status == 3){
+
+            input_order.status = 3; // setting the status of the input order to Pfill
+
+            if (input_order.isBuyOrder()) buyOrders.push_back(input_order); // adding the Pfill order to the buy orderbook
+            else if (input_order.isSellOrder()) sellOrders.push_back(input_order); // adding the Pfill order to the sell orderbook
         }
         
+        // Sort the orderbook at the end of the processing of one order
+        sortOrderbook();
         printOrderbook();
 }
     // Print orderbook
@@ -395,7 +403,8 @@ public:
                 orderBook.processOrder(order);
             } 
             else {
-                order.execStatus = "Reject";
+                //reject the order
+                order.status = 1;
                 csvHandler.writeOrderToCSV(outputFilename, order, reason);
             }
         }
