@@ -12,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example6.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution_test.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example1.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution1.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -212,7 +212,7 @@ private:
             else return a.ord < b.ord; // For the same price, earlier 'ord' comes first
         });
 
-        // Sort the sell orders in ascending order of price, and in case of a tie, by 'ord' (first come first serve)
+        // Sort the sell orders in ascending order of price, and in case of a tie, by 'ord' (FIFO)
         sort(sellOrders.begin(), sellOrders.end(), [](const Order& a, const Order& b) {
             if (a.price != b.price) return a.price < b.price;  // Lower price comes first for sell orders
             else return a.ord < b.ord; // For the same price, earlier 'ord' comes first
@@ -228,7 +228,9 @@ public:
         cout << "Now considering: "<< input_order.ord << endl;
 
         bool isMatching = false; // flag to check if the order is matching
+        bool input_order_filled = false; // flag to check if the input order is filled
         Order processed_order = input_order; // generating order object for the processing order
+        double input_order_price = input_order.price; // price of the input order
 
         // Divide into buy or sell orders
         // If the order is BUY
@@ -241,6 +243,9 @@ public:
                 
                 //current sell order
                 Order& sell_order = *it;
+
+                // Breaking condition if the input order price is less than the sell order price
+                if (input_order_price < sell_order.price) break;
             
                 if (input_order.instrument == sell_order.instrument && input_order.price >= sell_order.price && input_order.quantity >= sell_order.quantity){
 
@@ -254,6 +259,7 @@ public:
                         processed_order.status = 2;
                         sell_order.status = 2;
                         processed_order.price = sell_order.price;
+                        input_order_filled = true;
                     }
                     
                     //Pfill
@@ -274,6 +280,9 @@ public:
                 else{
                     ++it;
                 }
+
+                // Break the loop if the input order is filled
+                if (input_order_filled) break;
             }
             
 
@@ -299,6 +308,9 @@ public:
                 //current buy order
                 Order& buy_order = *it;
 
+                // Breaking condition if the input order price is greater than the buy order price
+                if (input_order_price > buy_order.price) break;
+
                 if (input_order.instrument == buy_order.instrument  && input_order.price <= buy_order.price && input_order.quantity >= buy_order.quantity){
 
                     //Matching orders found
@@ -320,6 +332,7 @@ public:
                         processed_order.status = 2;
                         buy_order.status = 2;
                         processed_order.price = buy_order.price;
+                        input_order_filled = true;
                     }
 
                     csvHandler.writeOrderToCSV(outputFilename, processed_order); // writing the processed order to the CSV
@@ -331,6 +344,9 @@ public:
                 else{
                     ++it;
                 }
+
+                // Break the loop if the input order is filled
+                if (input_order_filled) break;
             }
 
             
