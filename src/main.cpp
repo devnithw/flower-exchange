@@ -12,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example5.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution5.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example8.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution8.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
