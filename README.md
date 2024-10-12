@@ -1,4 +1,4 @@
-# Flower Exchange Application using C++
+# 🌺 Flower Exchange Application using C++
 ## Developed for High Performance Computing with C++ workshop by LSEG Technologies
 
 ## Base version
