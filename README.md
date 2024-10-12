@@ -13,7 +13,7 @@ This version of the code is not modularized and optimized. Also the filepaths fo
 
 
 ## Modularized version (Improved)
-This is a modularized and optimized version of the `src/main.cpp` code. The individual objects are divided into their own modules. Also includes the funcitonality to give input and output filepaths using command line arguments.
+This is a modularized and optimized version of the `src/main.cpp` code. The individual objects are divided into their own modules. Also includes the funcitonality to give input and output filepaths using command line arguments. All the code for this version is included in the `modularized` folder.
 
 - `CSVHandler` class - Handles the reading and writing rows a CSV file. Has seperate methods for reading an entire CSV, writing headings to CSV and writing each order executed to a line in CSV.
 - `Order` class - This module contains the code for the Order object. Each row in the input CSV file is converted to an Order object and sent to the OrderManager for execution.
