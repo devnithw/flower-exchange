@@ -12,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example1.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution1.csv"; // Output CSV file with execution report
+string inputFilename;
+string outputFilename;
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -433,7 +433,17 @@ public:
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Get arguments
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <input_filename> <output_filename>" << std::endl;
+        return 1;
+    }
+
+    // Get input and output filenames
+    std::string inputFilename = argv[1];
+    std::string outputFilename = argv[2];
+    
     // Instantiate order manager
     OrderManager orderManager(inputFilename, outputFilename);
 

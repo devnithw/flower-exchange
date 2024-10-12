@@ -4,3 +4,5 @@
 .DS_Store
 /src/main.exe
 /src/main
+./src/.DS_Store
+./modularized/.DS_Store
