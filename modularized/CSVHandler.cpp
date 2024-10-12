@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
+// Function to trim leading and trailing whitespaces
 void trim(std::string& s) {
     size_t start = s.find_first_not_of(" \t\r\n");
     size_t end = s.find_last_not_of(" \t\r\n");
@@ -20,6 +21,7 @@ std::vector<Order> CSVHandler::readCSV(const std::string& filename) {
     std::vector<Order> orders;
     std::ifstream file(filename);
 
+    // Raise error if file cannot be opened
     if (!file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return orders;
@@ -27,6 +29,7 @@ std::vector<Order> CSVHandler::readCSV(const std::string& filename) {
     std::string line;
     int orderCounter = 1;
 
+    // Read CSV line by line
     while (std::getline(file, line)) {
         std::istringstream ss(line);
         std::string clientOrder, instrument, sideStr, quantityStr, priceStr;
@@ -53,6 +56,7 @@ std::vector<Order> CSVHandler::readCSV(const std::string& filename) {
     return orders;
 }
 
+// Function to write a single order to CSV file
 void CSVHandler::writeOrderToCSV(const std::string& filename, const Order& order, const std::string& reason) {
     std::ofstream file(filename, std::ios_base::app);
     if (!file.is_open()) {
@@ -77,6 +81,7 @@ void CSVHandler::writeOrderToCSV(const std::string& filename, const Order& order
     file.close();
 }
 
+// Function to write the heading to CSV file
 void CSVHandler::writeHeadingToCSV(const std::string& filename) {
     std::ofstream file(filename, std::ios_base::app);
     if (!file.is_open()) {
@@ -89,6 +94,7 @@ void CSVHandler::writeHeadingToCSV(const std::string& filename) {
     file.close();
 }
 
+// Function to write the execution time to CSV file
 void CSVHandler::writeExecutionTimeToCSV(const std::string& filename, long long executionTime) {
     std::ofstream file(filename, std::ios_base::app);
     if (!file.is_open()) {
