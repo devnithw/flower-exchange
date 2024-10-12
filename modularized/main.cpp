@@ -2,8 +2,8 @@
 #include <chrono>
 
 int main() {
-    std::string inputFilename = "examples/example1.csv";
-    std::string outputFilename = "execution_reports/execution1.csv";
+    std::string inputFilename = "examples/example6.csv";
+    std::string outputFilename = "execution_reports/execution6.csv";
 
     // Instantiate order manager
     OrderManager orderManager(inputFilename, outputFilename);
