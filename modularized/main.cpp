@@ -1,9 +1,18 @@
 #include "OrderManager.h"
 #include <chrono>
+#include <iostream>
+#include <string>
 
-int main() {
-    std::string inputFilename = "examples/example6.csv";
-    std::string outputFilename = "execution_reports/execution6.csv";
+int main(int argc, char* argv[]) {
+    // Get arguments
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <input_filename> <output_filename>" << std::endl;
+        return 1;
+    }
+
+    // Get input and output filenames
+    std::string inputFilename = argv[1];
+    std::string outputFilename = argv[2];
 
     // Instantiate order manager
     OrderManager orderManager(inputFilename, outputFilename);
