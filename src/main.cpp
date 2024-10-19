@@ -12,8 +12,8 @@
 
 using namespace std;
 
-string inputFilename = "examples/example2.csv"; // Input CSV file with orders
-string outputFilename = "execution_reports/execution2.csv"; // Output CSV file with execution report
+string inputFilename = "examples/example5.csv"; // Input CSV file with orders
+string outputFilename = "execution_reports/execution5.csv"; // Output CSV file with execution report
 
 // Utility function to trim the whitespace from start and end of a string
 void trim(string& s) {
@@ -174,7 +174,7 @@ public:
     }
 
     void writeHeadingToCSV(const string& filename) {
-        ofstream file(filename, ios_base::app);
+        ofstream file(filename);
         if (!file.is_open()) {
             cerr << "Error opening file: " << filename << endl;
             return;
