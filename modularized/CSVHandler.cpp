@@ -83,7 +83,7 @@ void CSVHandler::writeOrderToCSV(const std::string& filename, const Order& order
 
 // Function to write the heading to CSV file
 void CSVHandler::writeHeadingToCSV(const std::string& filename) {
-    std::ofstream file(filename, std::ios_base::app);
+    std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
