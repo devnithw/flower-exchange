@@ -29,6 +29,11 @@ std::vector<Order> CSVHandler::readCSV(const std::string& filename) {
     std::string line;
     int orderCounter = 1;
 
+    // Skip the first row (header row)
+    if (std::getline(file, line)) {
+        // Optional: You could log the header if needed.
+    }
+
     // Read CSV line by line
     while (std::getline(file, line)) {
         std::istringstream ss(line);

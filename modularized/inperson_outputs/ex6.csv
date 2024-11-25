@@ -1,0 +1,8 @@
+Order ID,Cl. Ord. ID,Instrument,Side,Status,Quantity,Price,Reason
+ord1,aa1,,1,Rejected,100,55.00,Empty fields
+ord2,aa2,Rose,3,Rejected,100,65.00,Invalid side
+ord3,aa3,Rose,2,Rejected,55,55.00,Invalid quantity
+ord4,aa3,Rose,2,Rejected,100,-55.00,Invalid price
+ord5,aa4,Rose,1,Rejected,1100,55.00,Invalid quantity
+ord6,aa5,Mango,1,Rejected,100,55.00,Invalid instrument
+Execution Time (ms),0

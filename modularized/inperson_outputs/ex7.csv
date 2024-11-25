@@ -1,0 +1,20 @@
+Order ID,Cl. Ord. ID,Instrument,Side,Status,Quantity,Price,Reason
+ord1,aa13,Rose,2,New,100,75.00
+ord2,aa14,Rose,2,New,100,65.00
+ord3,aa15,Rose,2,New,100,55.00
+ord4,aa16,Rose,2,New,100,55.00
+ord5,aa17,Rose,2,New,100,55.00
+ord6,aa18,Rose,2,New,100,55.00
+ord7,aa19,Rose,1,Fill,100,55.00
+ord3,aa15,Rose,2,Fill,100,55.00
+ord8,aa20,Rose,1,Pfill,100,55.00
+ord4,aa16,Rose,2,Fill,100,55.00
+ord8,aa20,Rose,1,Fill,100,55.00
+ord5,aa17,Rose,2,Fill,100,55.00
+ord9,aa21,Rose,1,Pfill,100,55.00
+ord6,aa18,Rose,2,Fill,100,55.00
+ord9,aa21,Rose,1,Pfill,100,65.00
+ord2,aa14,Rose,2,Fill,100,65.00
+ord9,aa21,Rose,1,Fill,100,75.00
+ord1,aa13,Rose,2,Fill,100,75.00
+Execution Time (ms),2

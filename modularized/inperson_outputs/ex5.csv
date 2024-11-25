@@ -1,0 +1,10 @@
+Order ID,Cl. Ord. ID,Instrument,Side,Status,Quantity,Price,Reason
+ord1,aa1,Rose,2,New,100,55.00
+ord2,aa2,Rose,2,New,100,65.00
+ord3,aa3,Rose,1,Pfill,100,55.00
+ord1,aa1,Rose,2,Fill,100,55.00
+ord3,aa3,Rose,1,Pfill,100,65.00
+ord2,aa2,Rose,2,Fill,100,65.00
+ord4,aa4,Rose,2,Fill,100,100.00
+ord3,aa3,Rose,1,Fill,100,100.00
+Execution Time (ms),0
