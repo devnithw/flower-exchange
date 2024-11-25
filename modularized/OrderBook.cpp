@@ -36,7 +36,7 @@ void OrderBook::processOrder(Order& input_order) {
 
             if (input_order_price < sell_order.price) break;
 
-            if (input_order.instrument == sell_order.instrument && input_order.price >= sell_order.price && input_order.quantity >= sell_order.quantity) {
+            if (input_order.instrument == sell_order.instrument && input_order.price >= sell_order.price) { // change for largeer sell orders
                 std::cout << "Matching orders found" << std::endl;
                 isMatching = true;
 
@@ -45,13 +45,21 @@ void OrderBook::processOrder(Order& input_order) {
                     sell_order.status = 2;
                     processed_order.price = sell_order.price;
                     input_order_filled = true;
-                } else if (input_order.quantity > sell_order.quantity) {
+                } 
+                else if (input_order.quantity > sell_order.quantity) {
                     processed_order.status = 3;
                     sell_order.status = 2;
                     processed_order.quantity = sell_order.quantity;
                     input_order.quantity = input_order.quantity - sell_order.quantity;
                     processed_order.price = sell_order.price;
                 }
+                else if (input_order.quantity < sell_order.quantity) { // Changed for larger sell orders
+                    processed_order.status = 2;
+                    sell_order.status = 3;
+                    sell_order.quantity = sell_order.quantity - input_order.quantity;
+                    processed_order.quantity = input_order.quantity;
+                    processed_order.price = sell_order.price;
+                } 
 
                 csvHandler.writeOrderToCSV(outputFilename, processed_order);
                 csvHandler.writeOrderToCSV(outputFilename, sell_order);
@@ -95,7 +103,7 @@ void OrderBook::processOrder(Order& input_order) {
                     processed_order.price = buy_order.price;
                     input_order_filled = true;
                 }
-                else if (input_order.quantity < buy_order.quantity) {
+                else if (input_order.quantity < buy_order.quantity) { // Changed for larger buy orders
                     processed_order.status = 2;
                     buy_order.status = 3;
                     buy_order.quantity = buy_order.quantity - input_order.quantity;
