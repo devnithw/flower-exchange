@@ -16,7 +16,7 @@ bool Order::isSellOrder() const {
 
 std::pair<bool, std::string> Order::isValid() const {
     bool nonempty_fields = !clientOrder.empty() && !instrument.empty();
-    bool valid_quantity = quantity % 10 == 0 && quantity >= 10 && quantity <= 1000;
+    bool valid_quantity = quantity % 10 == 0 && quantity >= 10 && quantity < 1000; // Exclude endpoints
     bool valid_price = price > 0;
     bool valid_side = side == 1 || side == 2;
     bool valid_instrument = instrument == "Rose" || instrument == "Lavender" || instrument == "Lotus" || instrument == "Tulip" || instrument == "Orchid";  
